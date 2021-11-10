@@ -13,9 +13,9 @@ func init() {
 	Log.SetLevel(logrus.DebugLevel)
 	// 输出格式
 	Log.SetFormatter(&logrus.TextFormatter{
-		DisableColors: true,
-		FullTimestamp: true,
+		DisableColors: false,
+		FullTimestamp: false,
 	})
 	// 是否追踪方法
-	//Log.SetReportCaller(true)
+	Log.SetReportCaller(true)
 }

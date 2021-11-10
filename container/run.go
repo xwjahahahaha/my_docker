@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"xwj/mydocker/cgroups"
+	"xwj/mydocker/cgroups/subsystems"
 	"xwj/mydocker/log"
 )
 
@@ -37,7 +39,7 @@ func NewParentProcess(tty bool, command string) *exec.Cmd {
 // @Description: 执行命令
 // @param tty
 // @param cmd
-func Run(tty bool, cmd string){
+func Run(tty bool, cmd string, res *subsystems.ResourceConfig, cgroupName string){
 	parent := NewParentProcess(tty, cmd)
 	// 执行命令但是并不等待其结束
 	// 执行后会clone出一个namespace隔离的进程，然后在子进程中调用/proc/self/exe即自己，
@@ -45,9 +47,16 @@ func Run(tty bool, cmd string){
 	if err := parent.Start(); err != nil {
 		log.Log.Error(err)
 	}
+	// 创建cgroup manager并通过调用set和apply设置资源限制并在容器上生效
+	cgroupManager := cgroups.NewCgroupManager(cgroupName)
+	// 设置资源限制
+	cgroupManager.Set(res)
+	// 将容器进程加入到各个子系统中
+	cgroupManager.Apply(parent.Process.Pid)
 	// 等待结束
 	if err := parent.Wait(); err != nil {
 		log.Log.Error(err)
 	}
+	cgroupManager.Destroy()
 	os.Exit(1)
 }
