@@ -19,14 +19,14 @@ var initDocker = &cobra.Command{
 	Short: initUsage,
 	Long:  initUsage,
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// 获取传递的command参数，执行容器的初始化操作
-		container.RunContainerInitProcess(args[0])
+		return container.RunContainerInitProcess(args[0], nil)
 	},
 }
 
 var runDocker = &cobra.Command{
-	Use:   "run -it [command]",
+	Use:   "run [command]",
 	Short: runUsage,
 	Long:  runUsage,
 	Args: cobra.ExactArgs(1),
