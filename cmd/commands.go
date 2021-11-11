@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"strings"
 	"xwj/mydocker/cgroups/subsystems"
 	"xwj/mydocker/container"
 )
@@ -18,13 +19,13 @@ var (
 )
 
 var initDocker = &cobra.Command{
-	Use:   "init [command]",
+	Use:   "init",
 	Short: initUsage,
 	Long:  initUsage,
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// 获取传递的command参数，执行容器的初始化操作
-		return container.RunContainerInitProcess(args[0], nil)
+		return container.RunContainerInitProcess()
 	},
 }
 
@@ -35,6 +36,6 @@ var runDocker = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// 获取交互flag值与command, 启动容器
-		container.Run(tty, args[0], ResourceLimitCfg, CgroupName)
+		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName)
 	},
 }
