@@ -33,6 +33,8 @@ func NewParentProcess(tty bool) (*exec.Cmd, *os.File) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
+	// 设置进程启动的路径
+	cmd.Dir = "/root/projects/golang_project/src/myDocker/busybox"
 	// 在这里传入管道文件读取端的句柄
 	// ExtraFiles指定要由新进程继承的其他打开文件。它不包括标准输入、标准输出或标准错误。
 	cmd.ExtraFiles = []*os.File{readPipe}
