@@ -38,15 +38,18 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 	// 将容器进程加入到各个子系统中
 	cgroupManager.Apply(parent.Process.Pid)
 	// 等待结束
-	if err := parent.Wait(); err != nil {
-		log.Log.Error(err)
+	if tty {
+		// 如果是detach模式的话就父进程不需要等待子进程结束，而是启动子进程后自行结束就可以了
+		if err := parent.Wait(); err != nil {
+			log.Log.Error(err)
+		}
+		cgroupManager.Destroy()
+		// 删除设置的AUFS工作目录
+		rootUrl := "./"
+		mntUrl := "./mnt"
+		DeleteWorkSpace(rootUrl, mntUrl, volume)
+		os.Exit(1)
 	}
-	cgroupManager.Destroy()
-	// 删除设置的AUFS工作目录
-	rootUrl := "./"
-	mntUrl := "./mnt"
-	DeleteWorkSpace(rootUrl, mntUrl, volume)
-	os.Exit(1)
 }
 
 // sendUserCommand

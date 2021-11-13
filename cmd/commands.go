@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"strings"
 	"xwj/mydocker/cgroups/subsystems"
@@ -17,6 +18,7 @@ var (
 	ResourceLimitCfg = &subsystems.ResourceConfig{} // 资源限制配置
 	CgroupName       = "myDockerTestCgroup"         // 新建的cgroup的名称
 	Volume           string							// 数据卷
+	Detach				bool						// 后台运行
 )
 
 var initDocker = &cobra.Command{
@@ -35,9 +37,14 @@ var runDocker = &cobra.Command{
 	Short: runUsage,
 	Long:  runUsage,
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if tty && Detach {
+			// 两个标志不运行同时设置
+			return fmt.Errorf(" tty and detach can't both provided.")
+		}
 		// 获取交互flag值与command, 启动容器
 		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume)
+		return nil
 	},
 }
 
