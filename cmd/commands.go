@@ -16,7 +16,7 @@ var (
 	tty              bool                           // 是否交互式执行
 	ResourceLimitCfg = &subsystems.ResourceConfig{} // 资源限制配置
 	CgroupName       = "myDockerTestCgroup"         // 新建的cgroup的名称
-	ConfigPath       string                         //配置文件路径
+	Volume           string							// 数据卷
 )
 
 var initDocker = &cobra.Command{
@@ -37,6 +37,6 @@ var runDocker = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// 获取交互flag值与command, 启动容器
-		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName)
+		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume)
 	},
 }

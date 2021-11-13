@@ -7,4 +7,5 @@ func init() {
 	runDocker.Flags().StringVarP(&ResourceLimitCfg.CpuShare, "cpu-shares", "", "1024", "cpu shares")
 	runDocker.Flags().StringVarP(&ResourceLimitCfg.CpuSet, "cpu-set", "", "0", "cpu set")
 	runDocker.Flags().StringVarP(&ResourceLimitCfg.CpuMems, "cpu-mems", "", "0", "cpu memory")
+	runDocker.Flags().StringVarP(&Volume, "volume", "v", "", "add a volume")
 }

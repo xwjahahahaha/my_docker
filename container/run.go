@@ -12,10 +12,13 @@ import (
 // Run
 // @Description: 执行命令
 // @param tty
-// @param cmd
-func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string){
+// @param cmdArray
+// @param res
+// @param cgroupName
+// @param volume
+func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume string){
 	// 获取到管道写端
-	parent, pipeWriter := NewParentProcess(tty)
+	parent, pipeWriter := NewParentProcess(tty, volume)
 	if parent == nil {
 		log.LogErrorFrom("Run", "NewParentProcess", fmt.Errorf(" parent process is nil"))
 		return
@@ -42,7 +45,7 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 	// 删除设置的AUFS工作目录
 	rootUrl := "./"
 	mntUrl := "./mnt"
-	DeleteWorkSpace(rootUrl, mntUrl)
+	DeleteWorkSpace(rootUrl, mntUrl, volume)
 	os.Exit(1)
 }
 
