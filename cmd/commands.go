@@ -17,8 +17,9 @@ var (
 	tty              bool                           // 是否交互式执行
 	ResourceLimitCfg = &subsystems.ResourceConfig{} // 资源限制配置
 	CgroupName       = "myDockerTestCgroup"         // 新建的cgroup的名称
-	Volume           string							// 数据卷
-	Detach				bool						// 后台运行
+	Volume           string                         // 数据卷
+	Detach           bool                           // 后台运行
+	Name             string							// 容器名称
 )
 
 var initDocker = &cobra.Command{
@@ -43,7 +44,7 @@ var runDocker = &cobra.Command{
 			return fmt.Errorf(" tty and detach can't both provided.")
 		}
 		// 获取交互flag值与command, 启动容器
-		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume)
+		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name)
 		return nil
 	},
 }

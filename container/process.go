@@ -38,7 +38,7 @@ func NewParentProcess(tty bool, volume string) (*exec.Cmd, *os.File) {
 	mntUrl := "./mnt"
 	imageName := "busybox"
 	NewWorkSpace(rootUrl, imageName, mntUrl, volume)
-	cmd.Dir = mntUrl 			// 设置进程启动的路径
+	cmd.Dir = mntUrl 				// 设置进程启动的路径
 	// 在这里传入管道文件读取端的句柄
 	// ExtraFiles指定要由新进程继承的其他打开文件。它不包括标准输入、标准输出或标准错误。
 	cmd.ExtraFiles = []*os.File{readPipe}
@@ -57,4 +57,3 @@ func NewPipe() (*os.File, *os.File, error) {
 	}
 	return read, write, nil
 }
-

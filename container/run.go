@@ -16,7 +16,8 @@ import (
 // @param res
 // @param cgroupName
 // @param volume
-func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume string){
+// @param name
+func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, name string){
 	// 获取到管道写端
 	parent, pipeWriter := NewParentProcess(tty, volume)
 	if parent == nil {
@@ -28,6 +29,12 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 	// 发送init参数调用init方法初始化一些资源
 	if err := parent.Start(); err != nil {
 		log.Log.Error(err)
+	}
+	// 记录容器信息
+	containerInfo, err := recordContainerInfo(parent.Process.Pid, cmdArray, name)
+	if err != nil {
+		log.LogErrorFrom("Run", "recordContainerInfo", err)
+		return
 	}
 	// 发送用户的命令
 	sendUserCommand(cmdArray, pipeWriter)
@@ -48,6 +55,7 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		rootUrl := "./"
 		mntUrl := "./mnt"
 		DeleteWorkSpace(rootUrl, mntUrl, volume)
+		DeleteContainerInfo(containerInfo)
 		os.Exit(1)
 	}
 }

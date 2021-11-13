@@ -9,4 +9,5 @@ func init() {
 	runDocker.Flags().StringVarP(&ResourceLimitCfg.CpuMems, "cpu-mems", "", "0", "cpu memory")
 	runDocker.Flags().StringVarP(&Volume, "volume", "v", "", "add a volume")
 	runDocker.Flags().BoolVarP(&Detach, "detach", "d", false, "Run container in background and print container ID")
+	runDocker.Flags().StringVarP(&Name, "container-name", "n", "", "set a container nickname")
 }
