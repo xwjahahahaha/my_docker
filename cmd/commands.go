@@ -40,3 +40,13 @@ var runDocker = &cobra.Command{
 		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume)
 	},
 }
+
+var commitCommand = &cobra.Command{
+	Use:   "commit [image_name]",
+	Short: "commit a container into image",
+	Long:  "commit a container into image",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		container.CommitContainer(args[0])
+	},
+}
