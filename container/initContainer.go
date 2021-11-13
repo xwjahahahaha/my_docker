@@ -52,6 +52,7 @@ func readUserCommand() []string {
 	return strings.Split(cmdStrs, " ")
 }
 
+
 // pivotRoot
 // @Description: 使用pivot_root更改当前root文件系统
 // @param root	指定的新的根目录（一般就是容器的启动目录）
@@ -89,6 +90,8 @@ func pivotRoot(root string) error {
 	return os.Remove(pivotPath)
 }
 
+// setUpMount
+// @Description: 设置挂载
 func setUpMount()  {
 	// 首先设置根目录为私有模式，防止影响pivot_root
 	if err := syscall.Mount("/", "/", "", syscall.MS_REC | syscall.MS_PRIVATE, ""); err != nil {

@@ -16,6 +16,7 @@ var (
 	tty              bool                           // 是否交互式执行
 	ResourceLimitCfg = &subsystems.ResourceConfig{} // 资源限制配置
 	CgroupName       = "myDockerTestCgroup"         // 新建的cgroup的名称
+	ConfigPath       string                         //配置文件路径
 )
 
 var initDocker = &cobra.Command{

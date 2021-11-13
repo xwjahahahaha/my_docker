@@ -39,6 +39,10 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		log.Log.Error(err)
 	}
 	cgroupManager.Destroy()
+	// 删除设置的AUFS工作目录
+	rootUrl := "./"
+	mntUrl := "./mnt"
+	DeleteWorkSpace(rootUrl, mntUrl)
 	os.Exit(1)
 }
 
