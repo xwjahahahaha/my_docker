@@ -74,3 +74,13 @@ var listContainers = &cobra.Command{
 		container.ListAllContainers()
 	},
 }
+
+var logCommand = &cobra.Command{
+	Use:   "logs [container_id]",
+	Short: "print logs of a container",
+	Long:  "print logs of a container",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		container.LogContainer(args[0])
+	},
+}

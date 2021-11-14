@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -33,6 +34,7 @@ var (
 	EXIT                = "exited"
 	DefaultInfoLocation = "/var/run/mydocker/"
 	ConfigName          = "containerInfo.json"
+	LogFileName         = "container.log"
 )
 
 // RandStringContainerID
@@ -96,6 +98,27 @@ func recordContainerInfo(id string, cPID int, commandArray []string, cName strin
 		return "", err
 	}
 	return id, nil
+}
+
+// recordContainerLog
+// @Description: 创建容器进程的日志文件并将其标准输出重定向到此文件
+// @param id
+// @param cmdOut
+func recordContainerLog(id string, cmdOut *io.Writer) {
+	dirUrl := filepath.Join(DefaultInfoLocation, id)
+	if has, err := dirOrFileExist(dirUrl); err == nil && !has {
+		if err := os.MkdirAll(dirUrl, 0622); err != nil {
+			log.LogErrorFrom("recordContainerLog", "MkdirAll", err)
+			return
+		}
+	}
+	stdLogFilePath := filepath.Join(dirUrl, LogFileName)
+	stdLogFile, err := os.Create(stdLogFilePath)
+	if err != nil {
+		log.LogErrorFrom("recordContainerLog", "Create", err)
+		return
+	}
+	*cmdOut = stdLogFile
 }
 
 // DeleteContainerInfo
@@ -171,4 +194,28 @@ func getContainerInfo(file os.FileInfo) (*ContainerInfo, error) {
 		return nil, err
 	}
 	return &containerInfo, nil
+}
+
+// LogContainer
+// @Description: 输出一个容器的日志
+// @param containerId
+func LogContainer(containerId string)  {
+	logFilePath := filepath.Join(DefaultInfoLocation, containerId, LogFileName)
+	file, err := os.OpenFile(logFilePath, os.O_RDONLY, 0644)
+	if err != nil {
+		log.LogErrorFrom("LogContainer", "OpenFile", err)
+		return
+	}
+	defer file.Close()
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.LogErrorFrom("LogContainer", "ReadAll", err)
+		return
+	}
+	// 使用Fprint函数将读出来的文件内容输出到宿主机的标准输出/控制台中
+	_, err = fmt.Fprint(os.Stdout, string(content))
+	if err != nil {
+		log.LogErrorFrom("LogContainer", "Fprint", err)
+		return
+	}
 }

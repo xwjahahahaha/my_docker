@@ -33,6 +33,9 @@ func NewParentProcess(tty bool, volume, ImageTarPath, cId string) (*exec.Cmd, *o
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+	}else {
+		// 后台运行时生成对应目录的container.log文件
+		recordContainerLog(cId, &cmd.Stdout)
 	}
 	// 创建新的工作空间
 	rootUrl := "/var/lib/mydocker/aufs/" 				  // 根目录

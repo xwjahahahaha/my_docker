@@ -67,6 +67,9 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		DeleteWorkSpace(rootUrl, mntUrl, volume, cId)
 		DeleteContainerInfo(containerInfo)
 		os.Exit(1)
+	}else {
+		// 返回容器的ID
+		fmt.Printf("\033[1;32;40m%s\033[0m\n", "[" + cId + "]")
 	}
 }
 
