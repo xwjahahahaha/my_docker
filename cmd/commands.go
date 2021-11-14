@@ -16,10 +16,11 @@ const (
 var (
 	tty              bool                           // 是否交互式执行
 	ResourceLimitCfg = &subsystems.ResourceConfig{} // 资源限制配置
-	CgroupName       = "myDockerTestCgroup"         // 新建的cgroup的名称
+	CgroupName       = "myDocker"                   // 新建的cgroup的名称
 	Volume           string                         // 数据卷
 	Detach           bool                           // 后台运行
-	Name             string							// 容器名称
+	Name             string                         // 容器名称
+	ImageTarPath     string                         // 镜像的tar包路径
 )
 
 var initDocker = &cobra.Command{
@@ -43,8 +44,11 @@ var runDocker = &cobra.Command{
 			// 两个标志不运行同时设置
 			return fmt.Errorf(" tty and detach can't both provided.")
 		}
+		// 生成容器ID
+		// 首先生成容器ID
+		id := container.RandStringContainerID(10)
 		// 获取交互flag值与command, 启动容器
-		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name)
+		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name, ImageTarPath, id)
 		return nil
 	},
 }
@@ -56,5 +60,15 @@ var commitCommand = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		container.CommitContainer(args[0])
+	},
+}
+
+var listContainers = &cobra.Command{
+	Use:   "ps",
+	Short: "list all the containers",
+	Long:  "list all the containers",
+	Args:  cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		container.ListAllContainers()
 	},
 }

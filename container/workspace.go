@@ -14,10 +14,15 @@ import (
 // @param rootURL
 // @param mntURL
 // @param volume 是否使用数据卷
-func NewWorkSpace(rootURL, imageName, mntURL, volume string) {
-	CreateReadOnlyLayer(rootURL, imageName)      // 创建init只读层
-	CreateWriteLayer(rootURL)                    // 创建读写层
-	CreateMountPoint(rootURL, imageName, mntURL) // 创建mnt文件夹并挂载
+func NewWorkSpace(rootURL, ImageTarPath, mntURL, volume, cId string) {
+	// 验证tar包路径的合法性并返回镜像包名称
+	imageName := VerifyImageTar(ImageTarPath)
+	if imageName == "" {
+		return
+	}
+	CreateReadOnlyLayer(rootURL, ImageTarPath, imageName)      // 创建init只读层
+	CreateWriteLayer(rootURL, cId)                    // 创建读写层
+	CreateMountPoint(rootURL, imageName, mntURL, cId) // 创建mnt文件夹并挂载
 	if volume != "" {
 		// 数据卷操作
 		volumeUrls, err := volumeUrlExtract(volume)
@@ -85,35 +90,49 @@ func MountVolume(mntUrl string, volumeUrl []string)  {
 // CreateReadOnlyLayer
 // @Description: 通过镜像的压缩包解压并创建镜像文件夹作为只读层
 // @param rootURL
-// @param imageName
-func CreateReadOnlyLayer(rootURL, imageName string) {
-	imageName = strings.Trim(imageName, "/")
-	imageDir := rootURL + imageName + "/"
-	imageTarPath := rootURL + imageName + ".tar"
-	if has, err := dirOrFileExist(imageTarPath); err == nil && !has {
-		log.Log.Errorf(" Target image tar file not exist!")
-		return
-	}
+// @param ImageTarPath
+func CreateReadOnlyLayer(rootURL, ImageTarPath, imageName string) {
+	imageDir := filepath.Join(rootURL, "diff", imageName)
 	if has, err := dirOrFileExist(imageDir); err == nil && !has {
-		// 创建文件夹
-		if err := os.Mkdir(imageDir, 0777); err != nil {
+		// 如果不存在就循环的创建文件夹
+		if err := os.MkdirAll(imageDir, 0777); err != nil {
 			log.LogErrorFrom("createReadOnlyLayer", "Mkdir", err)
 		}
 	}
-	if _, err := exec.Command("tar", "-xvf", imageTarPath, "-C", imageDir).CombinedOutput(); err != nil {
+	if _, err := exec.Command("tar", "-xvf", ImageTarPath, "-C", imageDir).CombinedOutput(); err != nil {
 		log.LogErrorFrom("createReadOnlyLayer", "tar", err)
 	}
+}
+
+// VerifyImageTar
+// @Description:  验证tar包路径的合法性并返回镜像包名称
+// @param ImageTarPath
+// @return string
+func VerifyImageTar(ImageTarPath string) string {
+	if has, err := dirOrFileExist(ImageTarPath); err != nil {
+		log.LogErrorFrom("VerifyImageTar", "dirOrFileExist", err)
+		return ""
+	}else if err == nil && !has {
+		log.LogErrorFrom("VerifyImageTar", "dirOrFileExist", fmt.Errorf(" Not found this image tar!"))
+		return ""
+	}
+	paths := strings.Split(ImageTarPath, "/")
+	tarFileName := paths[len(paths)-1]
+	if !strings.HasSuffix(tarFileName, "tar") {
+		log.LogErrorFrom("VerifyImageTar", "HasPrefix", fmt.Errorf(" not a tar file!"))
+	}
+	return strings.Split(tarFileName, ".")[0]
 }
 
 // CreateWriteLayer
 // @Description: 创建读写层
 // @param rootURL
-func CreateWriteLayer(rootURL string) {
-	writeURL := rootURL + "writeLayer/"
+func CreateWriteLayer(rootURL, cId string) {
+	writeURL := filepath.Join(rootURL, "diff", cId + "_writeLayer")
 	if has, err := dirOrFileExist(writeURL); err == nil && has {
 		log.Log.Info("Write layer dir already exist. Delete and create new one.")
 		// 如果存在则先删除掉之前的
-		DeleteWriteLayer(rootURL)
+		DeleteWriteLayer(rootURL, cId)
 	}
 	if err := os.Mkdir(writeURL, 0777); err != nil {
 		log.LogErrorFrom("createWriteLayer", "Mkdir", err)
@@ -125,17 +144,20 @@ func CreateWriteLayer(rootURL string) {
 // @param rootURL
 // @param imageName
 // @param mntURL
-func CreateMountPoint(rootURL, imageName, mntURL string) {
+func CreateMountPoint(rootURL, imageName, mntURL, cId string) {
 	if has, err := dirOrFileExist(mntURL); err == nil && has {
 		log.Log.Info("mnt dir already exist. Delete and create new one.")
 		DeleteMountPoint(mntURL)
 	}
-	if err := os.Mkdir(mntURL, 0777); err != nil {
+	if err := os.MkdirAll(mntURL, 0777); err != nil {
 		log.LogErrorFrom("CreateMountPoint", "Mkdir", err)
 	}
 	// 将读写层目录与镜像只读层目录mount到mnt目录下
-	dirs := "dirs=" + rootURL + "writeLayer:" + rootURL + imageName
-	cmd := exec.Command("mount", "-t", "aufs", "-o", dirs, "myDockerMnt", mntURL)
+	writerPath := filepath.Join(rootURL, "diff", cId + "_writeLayer")
+	imageDir := filepath.Join(rootURL, "diff", imageName)
+	dirs := "dirs=" + writerPath + ":" + imageDir
+	fmt.Println(dirs)
+	cmd := exec.Command("mount", "-t", "aufs", "-o", dirs, "mnt_" + cId[:4], mntURL)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -147,7 +169,7 @@ func CreateMountPoint(rootURL, imageName, mntURL string) {
 // @Description: 当容器删除时一起删除工作空间
 // @param rootURL
 // @param mntURL
-func DeleteWorkSpace(rootURL, mntURL, volume string) {
+func DeleteWorkSpace(rootURL, mntURL, volume, cId string) {
 	if volume != "" {
 		// 当volume不为空的时候，
 		volumeUrls, err := volumeUrlExtract(volume);
@@ -161,7 +183,7 @@ func DeleteWorkSpace(rootURL, mntURL, volume string) {
 	}else {
 		DeleteMountPoint(mntURL)
 	}
-	DeleteWriteLayer(rootURL)
+	DeleteWriteLayer(rootURL, cId)
 }
 
 // DeleteMountPoint
@@ -184,9 +206,9 @@ func DeleteMountPoint(mntURL string) {
 // DeleteWriteLayer
 // @Description: 删除读写层目录
 // @param rootURL
-func DeleteWriteLayer(rootURL string) {
-	writeURL := rootURL + "writeLayer/"
-	if err := os.RemoveAll(writeURL); err != nil {
+func DeleteWriteLayer(rootURL, cId string) {
+	writerPath := filepath.Join(rootURL, "diff", cId + "_writeLayer")
+	if err := os.RemoveAll(writerPath); err != nil {
 		log.LogErrorFrom("deleteWriteLayer", "remove", err)
 	}
 }

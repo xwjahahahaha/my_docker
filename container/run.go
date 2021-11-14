@@ -3,6 +3,7 @@ package container
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"xwj/mydocker/cgroups"
 	"xwj/mydocker/cgroups/subsystems"
@@ -10,16 +11,25 @@ import (
 )
 
 // Run
-// @Description: 执行命令
+// @Description: 运行
+// @param tty
+// @param cmdArray
+// @param res
+// @param cgroupName
+// @param volume
+// @param cName
+// @param ImageTarPath
+// @param cId
+// @Description:
 // @param tty
 // @param cmdArray
 // @param res
 // @param cgroupName
 // @param volume
 // @param name
-func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, name string){
+func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, cName, ImageTarPath, cId string){
 	// 获取到管道写端
-	parent, pipeWriter := NewParentProcess(tty, volume)
+	parent, pipeWriter := NewParentProcess(tty, volume, ImageTarPath, cId)
 	if parent == nil {
 		log.LogErrorFrom("Run", "NewParentProcess", fmt.Errorf(" parent process is nil"))
 		return
@@ -31,7 +41,7 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		log.Log.Error(err)
 	}
 	// 记录容器信息
-	containerInfo, err := recordContainerInfo(parent.Process.Pid, cmdArray, name)
+	containerInfo, err := recordContainerInfo(cId, parent.Process.Pid, cmdArray, cName)
 	if err != nil {
 		log.LogErrorFrom("Run", "recordContainerInfo", err)
 		return
@@ -39,22 +49,22 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 	// 发送用户的命令
 	sendUserCommand(cmdArray, pipeWriter)
 	// 创建cgroup manager并通过调用set和apply设置资源限制并在容器上生效
-	cgroupManager := cgroups.NewCgroupManager(cgroupName)
+	containerCM := cgroups.NewCgroupManager(cgroupName + "_" + cId)
 	// 设置资源限制
-	cgroupManager.Set(res)
+	containerCM.Set(res)
 	// 将容器进程加入到各个子系统中
-	cgroupManager.Apply(parent.Process.Pid)
+	containerCM.Apply(parent.Process.Pid)
 	// 等待结束
 	if tty {
 		// 如果是detach模式的话就父进程不需要等待子进程结束，而是启动子进程后自行结束就可以了
 		if err := parent.Wait(); err != nil {
 			log.Log.Error(err)
 		}
-		cgroupManager.Destroy()
+		containerCM.Destroy()
 		// 删除设置的AUFS工作目录
-		rootUrl := "./"
-		mntUrl := "./mnt"
-		DeleteWorkSpace(rootUrl, mntUrl, volume)
+		rootUrl := "/var/lib/mydocker/aufs/"
+		mntUrl := filepath.Join(rootUrl, "mnt", cId)
+		DeleteWorkSpace(rootUrl, mntUrl, volume, cId)
 		DeleteContainerInfo(containerInfo)
 		os.Exit(1)
 	}

@@ -61,7 +61,7 @@ func GetCgroupPath(subsystem string, cPath string, autoCreate bool) (string, err
 	if _, err := os.Stat(absolutePath); err == nil || (autoCreate && os.IsNotExist(err)) {
 		if os.IsNotExist(err) {
 			// 创建文件夹
-			if err := os.Mkdir(absolutePath, 0755); err != nil {
+			if err := os.MkdirAll(absolutePath, 0755); err != nil {
 				return "", fmt.Errorf("error create cgroup dir %v", err)
 			}
 			return absolutePath, nil
