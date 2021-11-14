@@ -3,15 +3,19 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"os"
 	"strings"
 	"xwj/mydocker/cgroups/subsystems"
 	"xwj/mydocker/container"
 	"xwj/mydocker/log"
+	"xwj/mydocker/namespace"
 )
 
 const (
 	initUsage = `Init container process run user's process in container.Do not call it outside.`
 	runUsage  = `Create a container with namespace and cgroups limit: myDocker run -t [command]`
+	ENV_EXEC_PID = "mydocker_pid"
+	ENV_EXEC_CMD = "mydocker_cmd"
 )
 
 var (
@@ -82,5 +86,25 @@ var logCommand = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		container.LogContainer(args[0])
+	},
+}
+
+var execCommand = &cobra.Command{
+	Use:   "exec [container_id] [command]",
+	Short: "exec a command into container",
+	Long:  "print logs of a container",
+	//Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		namespace.EnterNamespace()
+		if os.Getenv(ENV_EXEC_PID) != "" {
+			log.Log.Infof("pid callback pid %s", os.Getenv(ENV_EXEC_PID))
+			return
+		}
+		if len(args) < 2 {
+			log.Log.Errorf("Missing container id and command")
+			return
+		}
+		cid, commandAry := args[0], strings.Split(args[1], " ")
+		container.ExecContainer(cid, commandAry)
 	},
 }
