@@ -6,6 +6,7 @@ import (
 	"strings"
 	"xwj/mydocker/cgroups/subsystems"
 	"xwj/mydocker/container"
+	"xwj/mydocker/log"
 )
 
 const (
@@ -47,6 +48,7 @@ var runDocker = &cobra.Command{
 		// 生成容器ID
 		// 首先生成容器ID
 		id := container.RandStringContainerID(10)
+		log.Log.Infof("Container ID [%s]", id)
 		// 获取交互flag值与command, 启动容器
 		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name, ImageTarPath, id)
 		return nil
