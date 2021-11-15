@@ -120,3 +120,14 @@ var stopCommand = &cobra.Command{
 		container.StopContainer(args[0])
 	},
 }
+
+
+var removeCommand = &cobra.Command{
+	Use:   "rm [container_id]",
+	Short: "remove a container",
+	Long:  "remove a container",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		container.RemoveContainer(args[0])
+	},
+}

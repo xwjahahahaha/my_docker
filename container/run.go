@@ -41,7 +41,7 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		log.Log.Error(err)
 	}
 	// 记录容器信息
-	containerInfo, err := recordContainerInfo(cId, parent.Process.Pid, cmdArray, cName)
+	containerInfo, err := recordContainerInfo(cId, parent.Process.Pid, cmdArray, cName, volume)
 	if err != nil {
 		log.LogErrorFrom("Run", "recordContainerInfo", err)
 		return
@@ -62,9 +62,8 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		}
 		containerCM.Destroy()
 		// 删除设置的AUFS工作目录
-		rootUrl := "/var/lib/mydocker/aufs/"
-		mntUrl := filepath.Join(rootUrl, "mnt", cId)
-		DeleteWorkSpace(rootUrl, mntUrl, volume, cId)
+		mntUrl := filepath.Join(ROOTURL, "mnt", cId)
+		DeleteWorkSpace(ROOTURL, mntUrl, volume, cId)
 		DeleteContainerInfo(containerInfo)
 		os.Exit(1)
 	}else {

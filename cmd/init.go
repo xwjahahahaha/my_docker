@@ -1,7 +1,7 @@
 package cmd
 
 func init() {
-	rootCmd.AddCommand(initDocker, runDocker, commitCommand, listContainers, logCommand, execCommand, stopCommand)
+	rootCmd.AddCommand(initDocker, runDocker, commitCommand, listContainers, logCommand, execCommand, stopCommand, removeCommand)
 	runDocker.Flags().BoolVarP(&tty, "tty", "t", false, "enable tty")
 	runDocker.Flags().StringVarP(&ResourceLimitCfg.MemoryLimit, "memory-limit", "m", "200m", "memory limit")
 	runDocker.Flags().StringVarP(&ResourceLimitCfg.CpuShare, "cpu-shares", "", "1024", "cpu shares")

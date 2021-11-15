@@ -24,6 +24,7 @@ type ContainerInfo struct {
 	Id          string `json:"id"`
 	Name        string `json:"name"`
 	Command     string `json:"command"`
+	Volume      string `json:"volume"`
 	CreatedTime string `json:"created_time"`
 	Status      string `json:"status"`
 }
@@ -57,7 +58,7 @@ func RandStringContainerID(n int) string {
 // @param cName
 // @return string
 // @return error
-func recordContainerInfo(id string, cPID int, commandArray []string, cName string) (string, error) {
+func recordContainerInfo(id string, cPID int, commandArray []string, cName, volume string) (string, error) {
 	// 以当前时间为容器的创建时间
 	createTime := time.Now().Format("2006-01-02 15:04:05")
 	// 如果用户没有指定容器名就用容器ID做为容器名
@@ -69,6 +70,7 @@ func recordContainerInfo(id string, cPID int, commandArray []string, cName strin
 		Id:          id,
 		Name:        cName,
 		Command:     strings.Join(commandArray, ""),
+		Volume:      volume,
 		CreatedTime: createTime,
 		Status:      RUNNING,
 	}
@@ -199,7 +201,7 @@ func getContainerInfo(file os.FileInfo) (*ContainerInfo, error) {
 // LogContainer
 // @Description: 输出一个容器的日志
 // @param containerId
-func LogContainer(containerId string)  {
+func LogContainer(containerId string) {
 	logFilePath := filepath.Join(DefaultInfoLocation, containerId, LogFileName)
 	file, err := os.OpenFile(logFilePath, os.O_RDONLY, 0644)
 	if err != nil {

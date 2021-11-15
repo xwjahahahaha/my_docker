@@ -8,6 +8,10 @@ import (
 	"xwj/mydocker/log"
 )
 
+const (
+	ROOTURL = "/var/lib/mydocker/aufs/"
+)
+
 // NewParentProcess
 // @Description: 创建新的命令进程(并未执行)
 // @param tty
@@ -38,9 +42,8 @@ func NewParentProcess(tty bool, volume, ImageTarPath, cId string) (*exec.Cmd, *o
 		recordContainerLog(cId, &cmd.Stdout)
 	}
 	// 创建新的工作空间
-	rootUrl := "/var/lib/mydocker/aufs/" 				  // 根目录
-	mntUrl := filepath.Join(rootUrl, "mnt", cId)          // 容器运行空间
-	NewWorkSpace(rootUrl, ImageTarPath, mntUrl, volume, cId)
+	mntUrl := filepath.Join(ROOTURL, "mnt", cId)          // 容器运行空间
+	NewWorkSpace(ROOTURL, ImageTarPath, mntUrl, volume, cId)
 	cmd.Dir = mntUrl 					 // 设置进程启动的路径
 	// 在这里传入管道文件读取端的句柄
 	// ExtraFiles指定要由新进程继承的其他打开文件。它不包括标准输入、标准输出或标准错误。

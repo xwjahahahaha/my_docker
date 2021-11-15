@@ -122,3 +122,25 @@ func StopContainer(containerID string)  {
 		log.LogErrorFrom("StopContainer", "WriteFile", err)
 	}
 }
+
+// RemoveContainer
+// @Description: 删除一个容器
+// @param containerID
+func RemoveContainer(containerID string)  {
+	containerInfo, err := getContainerByID(containerID)
+	if err != nil {
+		log.LogErrorFrom("StopContainer", "getContainerByID", err)
+		return
+	}
+	if containerInfo.Status == STOP {
+		containerInfoPath := filepath.Join(DefaultInfoLocation, containerID)
+		if err := os.RemoveAll(containerInfoPath); err != nil {
+			log.LogErrorFrom("RemoveContainer", "RemoveAll", err)
+			return
+		}
+		mntUrl := filepath.Join(ROOTURL, "mnt", containerID)
+		DeleteWorkSpace(ROOTURL, mntUrl, containerInfo.Volume, containerID)
+	}else {
+		log.Log.Warnf("Please stop container first.")
+	}
+}
