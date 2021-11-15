@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"xwj/mydocker/log"
 )
 
@@ -68,4 +70,55 @@ func getContainerPidByID(containerID string) (string, error)  {
 		return "", err
 	}
 	return containerInfo.Pid, nil
+}
+
+// getContainerByID
+// @Description: 根据容器ID获取容器信息结构体
+// @param containerID
+// @return *ContainerInfo
+// @return error
+func getContainerByID(containerID string) (*ContainerInfo, error)  {
+	// 读取容器信息文件
+	containerInfoPath := filepath.Join(DefaultInfoLocation, containerID, ConfigName)
+	content, err := ioutil.ReadFile(containerInfoPath)
+	if err != nil {
+		log.LogErrorFrom("getContainerByID", "ReadFile", err)
+		return nil, err
+	}
+	var containerInfo ContainerInfo
+	if err := json.Unmarshal(content, &containerInfo); err != nil {
+		log.LogErrorFrom("getContainerByID", "Unmarshal", err)
+		return nil, err
+	}
+	return &containerInfo, nil
+}
+
+// StopContainer
+// @Description: 关闭容器
+// @param containerID
+func StopContainer(containerID string)  {
+	containerInfo, err := getContainerByID(containerID)
+	if err != nil {
+		log.LogErrorFrom("StopContainer", "getContainerByID", err)
+		return
+	}
+	// 系统调用kill可以发送信号给进程，通过传递syscall.SIGTERM信号，去杀掉容器主进程
+	pid, _ := strconv.Atoi(containerInfo.Pid)
+	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
+		log.LogErrorFrom("StopContainer", "Kill", err)
+		return
+	}
+	// 修改容器的状态
+	containerInfo.Status = STOP
+	containerInfo.Pid = " "				// 注意这里要设置一个空格，为了exec判断pid不为空""
+	newContentBytes, err := json.Marshal(containerInfo)
+	if err != nil {
+		log.LogErrorFrom("StopContainer", "Marshal", err)
+		return
+	}
+	configPath := filepath.Join(DefaultInfoLocation, containerID, ConfigName)
+	// 写入
+	if err := ioutil.WriteFile(configPath, newContentBytes, 0622); err != nil {
+		log.LogErrorFrom("StopContainer", "WriteFile", err)
+	}
 }

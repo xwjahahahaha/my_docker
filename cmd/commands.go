@@ -110,3 +110,13 @@ var execCommand = &cobra.Command{
 		container.ExecContainer(cid, commandAry)
 	},
 }
+
+var stopCommand = &cobra.Command{
+	Use:   "stop [container_id]",
+	Short: "stop a container",
+	Long:  "stop a container",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		container.StopContainer(args[0])
+	},
+}
