@@ -93,18 +93,20 @@ var execCommand = &cobra.Command{
 	Use:   "exec [container_id] [command]",
 	Short: "exec a command into container",
 	Long:  "print logs of a container",
-	//Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		namespace.EnterNamespace()
 		if os.Getenv(ENV_EXEC_PID) != "" {
+			// 第二次调用的时候执行
 			log.Log.Infof("pid callback pid %s", os.Getenv(ENV_EXEC_PID))
+			// 调用namespace包自动调用C代码setns进入容器空间
+			namespace.EnterNamespace()
 			return
 		}
 		if len(args) < 2 {
-			log.Log.Errorf("Missing container id and command")
+			log.Log.Errorf("Missing container name or command.")
 			return
 		}
 		cid, commandAry := args[0], strings.Split(args[1], " ")
+		// 设置环境变量
 		container.ExecContainer(cid, commandAry)
 	},
 }

@@ -11,7 +11,7 @@ package namespace
 #include <errno.h>
 #include <string.h>
 
-// _attribute_((constructor))指的是一旦这个包被调用那么这个函数就会自动被执行。类似于构造函数，会在程序一启动的时候运行
+// __attribute__((constructor))指的是一旦这个包被调用那么这个函数就会自动被执行。类似于构造函数，会在程序一启动的时候运行
 __attribute__((constructor)) void enter_namespace(void) {
 	char *mydocker_pid;
 	// 从环境变量中获取需要进入的PID
@@ -53,4 +53,5 @@ __attribute__((constructor)) void enter_namespace(void) {
 */
 import "C"
 
-func EnterNamespace()  {}
+func EnterNamespace()  {
+}

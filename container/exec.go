@@ -15,6 +15,10 @@ const (
 	ENV_EXEC_CMD = "mydocker_cmd"
 )
 
+// ExecContainer
+// @Description: 创建子命令运行exec
+// @param containerID
+// @param commandAry
 func ExecContainer(containerID string, commandAry []string)  {
 	pid, err := getContainerPidByID(containerID)
 	if err != nil {
@@ -23,7 +27,7 @@ func ExecContainer(containerID string, commandAry []string)  {
 	cmdStr := strings.Join(commandAry, " ")
 	log.Log.Infof("container pid %s", pid)
 	log.Log.Infof("command %s", cmdStr)
-	// 执行我们自己创建的命令exec
+
 	cmd := exec.Command("/proc/self/exe", "exec")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -38,9 +42,10 @@ func ExecContainer(containerID string, commandAry []string)  {
 		log.LogErrorFrom("ExecContainer", "Setenv_ENV_EXEC_CMD", err)
 		return
 	}
-	// 执行
+
 	if err := cmd.Run(); err != nil {
-		log.Log.Errorf("Exec container %s error %v", containerID, err)
+		log.LogErrorFrom("ExecContainer", "Run", err)
+		return
 	}
 }
 
