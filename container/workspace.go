@@ -156,7 +156,6 @@ func CreateMountPoint(rootURL, imageName, mntURL, cId string) {
 	writerPath := filepath.Join(rootURL, "diff", cId + "_writeLayer")
 	imageDir := filepath.Join(rootURL, "diff", imageName)
 	dirs := "dirs=" + writerPath + ":" + imageDir
-	fmt.Println(dirs)
 	cmd := exec.Command("mount", "-t", "aufs", "-o", dirs, "mnt_" + cId[:4], mntURL)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

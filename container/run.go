@@ -27,9 +27,9 @@ import (
 // @param cgroupName
 // @param volume
 // @param name
-func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, cName, ImageTarPath, cId string){
+func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, cName, ImageTarPath, cId string, EnvSlice []string){
 	// 获取到管道写端
-	parent, pipeWriter := NewParentProcess(tty, volume, ImageTarPath, cId)
+	parent, pipeWriter := NewParentProcess(tty, volume, ImageTarPath, cId, EnvSlice)
 	if parent == nil {
 		log.LogErrorFrom("Run", "NewParentProcess", fmt.Errorf(" parent process is nil"))
 		return

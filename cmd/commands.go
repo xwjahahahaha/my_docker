@@ -12,10 +12,9 @@ import (
 )
 
 const (
-	initUsage = `Init container process run user's process in container.Do not call it outside.`
-	runUsage  = `Create a container with namespace and cgroups limit: myDocker run -t [command]`
+	initUsage    = `Init container process run user's process in container.Do not call it outside.`
+	runUsage     = `Create a container with namespace and cgroups limit: myDocker run -t [command]`
 	ENV_EXEC_PID = "mydocker_pid"
-	ENV_EXEC_CMD = "mydocker_cmd"
 )
 
 var (
@@ -26,6 +25,7 @@ var (
 	Detach           bool                           // 后台运行
 	Name             string                         // 容器名称
 	ImageTarPath     string                         // 镜像的tar包路径
+	EnvSlice         []string                       // 环境变量
 )
 
 var initDocker = &cobra.Command{
@@ -54,7 +54,7 @@ var runDocker = &cobra.Command{
 		id := container.RandStringContainerID(10)
 		log.Log.Infof("Container ID [%s]", id)
 		// 获取交互flag值与command, 启动容器
-		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name, ImageTarPath, id)
+		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name, ImageTarPath, id, EnvSlice)
 		return nil
 	},
 }
@@ -120,7 +120,6 @@ var stopCommand = &cobra.Command{
 		container.StopContainer(args[0])
 	},
 }
-
 
 var removeCommand = &cobra.Command{
 	Use:   "rm [container_id]",

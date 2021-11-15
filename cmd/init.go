@@ -11,4 +11,5 @@ func init() {
 	runDocker.Flags().BoolVarP(&Detach, "detach", "d", false, "Run container in background and print container ID")
 	runDocker.Flags().StringVarP(&Name, "container-name", "n", "", "set a container nickname")
 	runDocker.Flags().StringVarP(&ImageTarPath, "image-tar-path", "i", "./busybox.tar", "used image tar file path")
+	runDocker.Flags().StringSliceVarP(&EnvSlice, "set-environment", "e", []string{}, "set environment")
 }

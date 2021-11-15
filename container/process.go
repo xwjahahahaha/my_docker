@@ -17,7 +17,7 @@ const (
 // @param tty
 // @return *exec.Cmd
 // @return *os.File   管道写入端
-func NewParentProcess(tty bool, volume, ImageTarPath, cId string) (*exec.Cmd, *os.File) {
+func NewParentProcess(tty bool, volume, ImageTarPath, cId string, EnvSlice []string) (*exec.Cmd, *os.File) {
 	// 创建匿名管道
 	readPipe, writePipe, err := NewPipe()
 	if err != nil {
@@ -48,6 +48,9 @@ func NewParentProcess(tty bool, volume, ImageTarPath, cId string) (*exec.Cmd, *o
 	// 在这里传入管道文件读取端的句柄
 	// ExtraFiles指定要由新进程继承的其他打开文件。它不包括标准输入、标准输出或标准错误。
 	cmd.ExtraFiles = []*os.File{readPipe}
+	// 添加环境变量
+	// os.Environ()就是系统默认的配置（宿主机的环境变量）,默认新启动进程都是默认继承父进程的环境变量
+	cmd.Env = append(os.Environ(), EnvSlice...)
 	return cmd, writePipe
 }
 
