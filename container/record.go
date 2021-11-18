@@ -15,10 +15,6 @@ import (
 	"xwj/mydocker/log"
 )
 
-const (
-	IDLen = 10
-)
-
 type ContainerInfo struct {
 	Pid         string `json:"pid"`
 	Id          string `json:"id"`
@@ -27,6 +23,7 @@ type ContainerInfo struct {
 	Volume      string `json:"volume"`
 	CreatedTime string `json:"created_time"`
 	Status      string `json:"status"`
+	PortMapping []string `json:"port_mapping"` //端口映射
 }
 
 var (
@@ -38,10 +35,7 @@ var (
 	LogFileName         = "container.log"
 )
 
-// RandStringContainerID
-// @Description: 容器ID随机生成器
-// @param n
-// @return string
+// RandStringContainerID 容器ID随机生成器
 func RandStringContainerID(n int) string {
 	if n < 0 || n > 32 {
 		n = 32
@@ -51,14 +45,8 @@ func RandStringContainerID(n int) string {
 	return fmt.Sprintf("%x", hashBytes[:n])
 }
 
-// recordContainerInfo
-// @Description: 记录一个容器的信息
-// @param cPID
-// @param commandArray
-// @param cName
-// @return string
-// @return error
-func recordContainerInfo(id string, cPID int, commandArray []string, cName, volume string) (string, error) {
+// RecordContainerInfo 记录一个容器的信息
+func RecordContainerInfo(id string, cPID int, commandArray []string, cName, volume string, port []string) (*ContainerInfo, error) {
 	// 以当前时间为容器的创建时间
 	createTime := time.Now().Format("2006-01-02 15:04:05")
 	// 如果用户没有指定容器名就用容器ID做为容器名
@@ -73,39 +61,37 @@ func recordContainerInfo(id string, cPID int, commandArray []string, cName, volu
 		Volume:      volume,
 		CreatedTime: createTime,
 		Status:      RUNNING,
+		PortMapping: port,
 	}
 	// 序列为json
 	jsonBytes, err := json.Marshal(containerInfo)
 	if err != nil {
 		log.LogErrorFrom("recordContainerInfo", "Marshal", err)
-		return "", err
+		return nil, err
 	}
 	// 创建容器信息对应的文件夹
 	dirUrl := filepath.Join(DefaultInfoLocation, id)
 	if err := os.MkdirAll(dirUrl, 0622); err != nil {
 		log.LogErrorFrom("recordContainerInfo", "MkdirAll", err)
-		return "", err
+		return nil, err
 	}
 	// 创建json文件
 	fileName := filepath.Join(dirUrl, ConfigName)
 	configFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		log.LogErrorFrom("recordContainerInfo", "OpenFile", err)
-		return "", err
+		return nil, err
 	}
 	defer configFile.Close()
 	// 写入到文件
 	if _, err := configFile.WriteString(string(jsonBytes)); err != nil {
 		log.LogErrorFrom("recordContainerInfo", "WriteString", err)
-		return "", err
+		return nil, err
 	}
-	return id, nil
+	return &containerInfo, nil
 }
 
-// recordContainerLog
-// @Description: 创建容器进程的日志文件并将其标准输出重定向到此文件
-// @param id
-// @param cmdOut
+// recordContainerLog 创建容器进程的日志文件并将其标准输出重定向到此文件
 func recordContainerLog(id string, cmdOut *io.Writer) {
 	dirUrl := filepath.Join(DefaultInfoLocation, id)
 	if has, err := dirOrFileExist(dirUrl); err == nil && !has {
@@ -123,9 +109,7 @@ func recordContainerLog(id string, cmdOut *io.Writer) {
 	*cmdOut = stdLogFile
 }
 
-// DeleteContainerInfo
-// @Description: 删除一个容器的容器ID
-// @param containerID
+// DeleteContainerInfo 删除一个容器的容器ID
 func DeleteContainerInfo(containerID string) {
 	dirUrl := filepath.Join(DefaultInfoLocation, containerID)
 	if err := os.RemoveAll(dirUrl); err != nil {
@@ -133,8 +117,7 @@ func DeleteContainerInfo(containerID string) {
 	}
 }
 
-// ListAllContainers
-// @Description: 列出所有容器信息，输出到标准输出
+// ListAllContainers  列出所有容器信息，输出到标准输出
 func ListAllContainers() {
 	dirUrl := filepath.Join(DefaultInfoLocation)
 	// 读取该路径下的所有文件
@@ -145,6 +128,10 @@ func ListAllContainers() {
 	}
 	var containers []*ContainerInfo
 	for _, file := range files {
+		// 排除掉network文件夹的影响
+		if file.Name() == "network" {
+			continue
+		}
 		tmpContainerInfo, err := getContainerInfo(file)
 		if err != nil {
 			log.LogErrorFrom("ListAllContainers", "getContainerInfo", err)
@@ -174,11 +161,7 @@ func ListAllContainers() {
 	}
 }
 
-// getContainerInfo
-// @Description: 获取一个容器的信息
-// @param file
-// @return *ContainerInfo
-// @return error
+// getContainerInfo 获取一个容器的信息
 func getContainerInfo(file os.FileInfo) (*ContainerInfo, error) {
 	// 获取文件名称
 	fileName := file.Name()
@@ -198,9 +181,7 @@ func getContainerInfo(file os.FileInfo) (*ContainerInfo, error) {
 	return &containerInfo, nil
 }
 
-// LogContainer
-// @Description: 输出一个容器的日志
-// @param containerId
+// LogContainer 输出一个容器的日志
 func LogContainer(containerId string) {
 	logFilePath := filepath.Join(DefaultInfoLocation, containerId, LogFileName)
 	file, err := os.OpenFile(logFilePath, os.O_RDONLY, 0644)

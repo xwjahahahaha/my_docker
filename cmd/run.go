@@ -1,4 +1,4 @@
-package container
+package cmd
 
 import (
 	"fmt"
@@ -7,29 +7,15 @@ import (
 	"strings"
 	"xwj/mydocker/cgroups"
 	"xwj/mydocker/cgroups/subsystems"
+	"xwj/mydocker/container"
 	"xwj/mydocker/log"
+	"xwj/mydocker/network"
 )
 
-// Run
-// @Description: 运行
-// @param tty
-// @param cmdArray
-// @param res
-// @param cgroupName
-// @param volume
-// @param cName
-// @param ImageTarPath
-// @param cId
-// @Description:
-// @param tty
-// @param cmdArray
-// @param res
-// @param cgroupName
-// @param volume
-// @param name
-func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, cName, ImageTarPath, cId string, EnvSlice []string){
+// Run 运行容器
+func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, cName, ImageTarPath, cId string, EnvSlice, port []string, NetWorkName string){
 	// 获取到管道写端
-	parent, pipeWriter := NewParentProcess(tty, volume, ImageTarPath, cId, EnvSlice)
+	parent, pipeWriter := container.NewParentProcess(tty, volume, ImageTarPath, cId, EnvSlice)
 	if parent == nil {
 		log.LogErrorFrom("Run", "NewParentProcess", fmt.Errorf(" parent process is nil"))
 		return
@@ -41,10 +27,23 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		log.Log.Error(err)
 	}
 	// 记录容器信息
-	containerInfo, err := recordContainerInfo(cId, parent.Process.Pid, cmdArray, cName, volume)
+	containerInfo, err := container.RecordContainerInfo(cId, parent.Process.Pid, cmdArray, cName, volume, port)
 	if err != nil {
 		log.LogErrorFrom("Run", "recordContainerInfo", err)
 		return
+	}
+	// 如果需要则连接网络
+	if NetWorkName != "" {
+		// 初始化网络
+		if err := network.Init(); err != nil {
+			log.Log.Error(err)
+			return
+		}
+		// 将容器连接到目标网络
+		if err := network.Connect(NetWorkName, containerInfo); err != nil {
+			log.Log.Errorf("Error Connect Network %v", err)
+			return
+		}
 	}
 	// 发送用户的命令
 	sendUserCommand(cmdArray, pipeWriter)
@@ -62,9 +61,9 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		}
 		containerCM.Destroy()
 		// 删除设置的AUFS工作目录
-		mntUrl := filepath.Join(ROOTURL, "mnt", cId)
-		DeleteWorkSpace(ROOTURL, mntUrl, volume, cId)
-		DeleteContainerInfo(containerInfo)
+		mntUrl := filepath.Join(container.ROOTURL, "mnt", cId)
+		container.DeleteWorkSpace(container.ROOTURL, mntUrl, volume, cId)
+		container.DeleteContainerInfo(containerInfo.Pid)
 		os.Exit(1)
 	}else {
 		// 返回容器的ID

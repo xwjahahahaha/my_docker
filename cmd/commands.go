@@ -9,6 +9,7 @@ import (
 	"xwj/mydocker/container"
 	"xwj/mydocker/log"
 	"xwj/mydocker/namespace"
+	"xwj/mydocker/network"
 )
 
 const (
@@ -26,6 +27,14 @@ var (
 	Name             string                         // 容器名称
 	ImageTarPath     string                         // 镜像的tar包路径
 	EnvSlice         []string                       // 环境变量
+	NetWorkName      string                         // 网络名
+	Port             []string                       // 端口映射
+)
+
+var (
+	driver string // 网络驱动名称
+	subnet string // 子网网段
+
 )
 
 var initDocker = &cobra.Command{
@@ -54,7 +63,7 @@ var runDocker = &cobra.Command{
 		id := container.RandStringContainerID(10)
 		log.Log.Infof("Container ID [%s]", id)
 		// 获取交互flag值与command, 启动容器
-		container.Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name, ImageTarPath, id, EnvSlice)
+		Run(tty, strings.Split(args[0], " "), ResourceLimitCfg, CgroupName, Volume, Name, ImageTarPath, id, EnvSlice, Port, NetWorkName)
 		return nil
 	},
 }
@@ -128,5 +137,61 @@ var removeCommand = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		container.RemoveContainer(args[0])
+	},
+}
+
+var networkCommand = &cobra.Command{
+	Use:   "network",
+	Short: "container network commands",
+	Long:  "container network commands",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
+}
+
+var networkCreate = &cobra.Command{
+	Use:   "create [network_name]",
+	Short: "create a container network",
+	Long:  "create a container network",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// 加载网络配置信息
+		if err := network.Init(); err != nil {
+			return err
+		}
+		// 创建网络
+		if err := network.CreateNetwork(driver, subnet, args[0]); err != nil {
+			return fmt.Errorf("create network error: %+v", err)
+		}
+		return nil
+	},
+}
+
+var networkList = &cobra.Command{
+	Use:   "list",
+	Short: "list container network",
+	Long:  "list container network",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := network.Init(); err != nil {
+			return err
+		}
+		network.ListNetwork()
+		return nil
+	},
+}
+
+var networkRemove = &cobra.Command{
+	Use:   "remove [network_name]",
+	Short: "remove container network",
+	Long:  "remove container network",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := network.Init(); err != nil {
+			return err
+		}
+		if err := network.DeleteNetwork(args[0]); err != nil {
+			return err
+		}
+		return nil
 	},
 }
