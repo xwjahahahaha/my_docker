@@ -14,8 +14,8 @@ func init() {
 	// 输出格式
 	Log.SetFormatter(&logrus.TextFormatter{
 		DisableColors: false,
-		FullTimestamp: false,
+		FullTimestamp: true,
 	})
 	// 是否追踪方法
-	Log.SetReportCaller(true)
+	Log.SetReportCaller(false)
 }
