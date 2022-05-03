@@ -13,7 +13,7 @@ import (
 const ipamDefaultAllocatorPath = "/var/run/mydocker/network/ipam/subnet.json"
 
 type IPAM struct {
-	SubnetAllocatorPath string             // 分配文件存放的位置
+	SubnetAllocatorPath string            // 分配文件存放的位置
 	Subnets             map[string]string // 网段和位图算法的数组map：key是网段，value是分配的位图字符串（使用字符串的一个字符标识一个状态位）
 }
 
@@ -99,7 +99,7 @@ func (ipam *IPAM) Allocate(subnet *net.IPNet) (ip net.IP, err error) {
 	// 如果之前没有分配过这个网段，则初始化网段的分配配置
 	if _, has := ipam.Subnets[ipAddr]; !has {
 		// 1 << uint8(zero) 表示 2^(zero) 表示 剩余的可分配的IP数量，后面的位数全部用0填满
-		ipam.Subnets[ipAddr] = strings.Repeat("0", 1<<uint8(size - one))
+		ipam.Subnets[ipAddr] = strings.Repeat("0", 1<<uint8(size-one))
 	}
 	var AlloIP net.IP
 	// 遍历网段的位图数组

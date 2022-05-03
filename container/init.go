@@ -52,20 +52,19 @@ func readUserCommand() []string {
 	return strings.Split(cmdStrs, " ")
 }
 
-
 // pivotRoot
 // @Description: 使用pivot_root更改当前root文件系统
 // @param root	指定的新的根目录（一般就是容器的启动目录）
 // @return error
 func pivotRoot(root string) error {
 	// 重新mount新的根目录
-	if err := syscall.Mount(root, root, "bind", syscall.MS_BIND | syscall.MS_REC, ""); err != nil {
+	if err := syscall.Mount(root, root, "bind", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
 		return fmt.Errorf(" Mount rootfs to itself error: %v", err)
 	}
 	// 创建临时文件.pivot_root存储old_root
 	pivotPath := filepath.Join(root, ".pivot_root")
 	// 判断当前目录是否已有该文件夹
-	if _ ,err := os.Stat(pivotPath); err == nil {
+	if _, err := os.Stat(pivotPath); err == nil {
 		// 存在则删除
 		if err := os.Remove(pivotPath); err != nil {
 			return err
@@ -83,7 +82,7 @@ func pivotRoot(root string) error {
 		return fmt.Errorf(" Chdir / %v", err)
 	}
 	// 取消临时文件.pivot_root的挂载并删除它
-	pivotPath = filepath.Join("/", ".pivot_root")		// 注意当前已经在根目录下，所以临时文件的目录也改变了
+	pivotPath = filepath.Join("/", ".pivot_root") // 注意当前已经在根目录下，所以临时文件的目录也改变了
 	if err := syscall.Unmount(pivotPath, syscall.MNT_DETACH); err != nil {
 		return fmt.Errorf(" Unmount .pivot_root dir %v", err)
 	}
@@ -92,9 +91,9 @@ func pivotRoot(root string) error {
 
 // setUpMount
 // @Description: 设置挂载
-func setUpMount()  {
+func setUpMount() {
 	// 首先设置根目录为私有模式，防止影响pivot_root
-	if err := syscall.Mount("/", "/", "", syscall.MS_REC | syscall.MS_PRIVATE, ""); err != nil {
+	if err := syscall.Mount("/", "/", "", syscall.MS_REC|syscall.MS_PRIVATE, ""); err != nil {
 		log.LogErrorFrom("setUpMount", "Mount proc", err)
 	}
 	// 获取当前路径
@@ -110,11 +109,11 @@ func setUpMount()  {
 	// 设置一些挂载
 	// 挂载/proc文件系统
 	// 设置挂载点的flag
-	defaultMountFlags :=  syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
+	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
 	if err := syscall.Mount("", "/proc", "proc", uintptr(defaultMountFlags), ""); err != nil {
 		log.LogErrorFrom("setUpMount", "Mount proc", err)
 	}
-	if err := syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID | syscall.MS_STRICTATIME, "mode=755"); err != nil {
+	if err := syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID|syscall.MS_STRICTATIME, "mode=755"); err != nil {
 		log.LogErrorFrom("setUpMount", "Mount /dev", err)
 	}
 }

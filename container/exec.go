@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"xwj/mydocker/log"
+	"xwj/mydocker/record"
 )
 
 const (
@@ -22,7 +23,7 @@ const (
 // @Description: 创建子命令运行exec
 // @param containerID
 // @param commandAry
-func ExecContainer(containerID string, commandAry []string)  {
+func ExecContainer(containerID string, commandAry []string) {
 	pid, err := getContainerPidByID(containerID)
 	if err != nil {
 		return
@@ -60,7 +61,7 @@ func ExecContainer(containerID string, commandAry []string)  {
 // @param containerID
 // @return string
 // @return error
-func getContainerPidByID(containerID string) (string, error)  {
+func getContainerPidByID(containerID string) (string, error) {
 	// 读取容器信息文件
 	containerInfoPath := filepath.Join(DefaultInfoLocation, containerID, ConfigName)
 	content, err := ioutil.ReadFile(containerInfoPath)
@@ -68,7 +69,7 @@ func getContainerPidByID(containerID string) (string, error)  {
 		log.LogErrorFrom("getContainerPidByID", "ReadFile", err)
 		return "", err
 	}
-	var containerInfo ContainerInfo
+	var containerInfo record.ContainerInfo
 	if err := json.Unmarshal(content, &containerInfo); err != nil {
 		log.LogErrorFrom("getContainerPidByID", "Unmarshal", err)
 		return "", err
@@ -81,7 +82,7 @@ func getContainerPidByID(containerID string) (string, error)  {
 // @param containerID
 // @return *ContainerInfo
 // @return error
-func getContainerByID(containerID string) (*ContainerInfo, error)  {
+func getContainerByID(containerID string) (*record.ContainerInfo, error) {
 	// 读取容器信息文件
 	containerInfoPath := filepath.Join(DefaultInfoLocation, containerID, ConfigName)
 	content, err := ioutil.ReadFile(containerInfoPath)
@@ -89,7 +90,7 @@ func getContainerByID(containerID string) (*ContainerInfo, error)  {
 		log.LogErrorFrom("getContainerByID", "ReadFile", err)
 		return nil, err
 	}
-	var containerInfo ContainerInfo
+	var containerInfo record.ContainerInfo
 	if err := json.Unmarshal(content, &containerInfo); err != nil {
 		log.LogErrorFrom("getContainerByID", "Unmarshal", err)
 		return nil, err
@@ -117,7 +118,7 @@ func getEnvsByPid(pid string) []string {
 // StopContainer
 // @Description: 关闭容器
 // @param containerID
-func StopContainer(containerID string)  {
+func StopContainer(containerID string) {
 	containerInfo, err := getContainerByID(containerID)
 	if err != nil {
 		log.LogErrorFrom("StopContainer", "getContainerByID", err)
@@ -131,7 +132,7 @@ func StopContainer(containerID string)  {
 	}
 	// 修改容器的状态
 	containerInfo.Status = STOP
-	containerInfo.Pid = " "				// 注意这里要设置一个空格，为了exec判断pid不为空""
+	containerInfo.Pid = " " // 注意这里要设置一个空格，为了exec判断pid不为空""
 	newContentBytes, err := json.Marshal(containerInfo)
 	if err != nil {
 		log.LogErrorFrom("StopContainer", "Marshal", err)
@@ -147,7 +148,7 @@ func StopContainer(containerID string)  {
 // RemoveContainer
 // @Description: 删除一个容器
 // @param containerID
-func RemoveContainer(containerID string)  {
+func RemoveContainer(containerID string) {
 	containerInfo, err := getContainerByID(containerID)
 	if err != nil {
 		log.LogErrorFrom("StopContainer", "getContainerByID", err)
@@ -161,7 +162,7 @@ func RemoveContainer(containerID string)  {
 		}
 		mntUrl := filepath.Join(ROOTURL, "mnt", containerID)
 		DeleteWorkSpace(ROOTURL, mntUrl, containerInfo.Volume, containerID)
-	}else {
+	} else {
 		log.Log.Warnf("Please stop container first.")
 	}
 }

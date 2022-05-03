@@ -1,11 +1,11 @@
-package container
+package utils
 
 import (
 	"os"
 	"xwj/mydocker/log"
 )
 
-func dirOrFileExist(path string) (bool, error) {
+func DirOrFileExist(path string) (bool, error) {
 	if _, err := os.Stat(path); err == nil {
 		return true, nil
 	}else if os.IsNotExist(err) {

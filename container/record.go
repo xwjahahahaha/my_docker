@@ -13,18 +13,9 @@ import (
 	"text/tabwriter"
 	"time"
 	"xwj/mydocker/log"
+	"xwj/mydocker/record"
+	"xwj/mydocker/utils"
 )
-
-type ContainerInfo struct {
-	Pid         string `json:"pid"`
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Command     string `json:"command"`
-	Volume      string `json:"volume"`
-	CreatedTime string `json:"created_time"`
-	Status      string `json:"status"`
-	PortMapping []string `json:"port_mapping"` //端口映射
-}
 
 var (
 	RUNNING             = "running"
@@ -46,14 +37,14 @@ func RandStringContainerID(n int) string {
 }
 
 // RecordContainerInfo 记录一个容器的信息
-func RecordContainerInfo(id string, cPID int, commandArray []string, cName, volume string, port []string) (*ContainerInfo, error) {
+func RecordContainerInfo(id string, cPID int, commandArray []string, cName, volume string, port []string) (*record.ContainerInfo, error) {
 	// 以当前时间为容器的创建时间
 	createTime := time.Now().Format("2006-01-02 15:04:05")
 	// 如果用户没有指定容器名就用容器ID做为容器名
 	if cName == "" {
 		cName = id
 	}
-	containerInfo := ContainerInfo{
+	containerInfo := record.ContainerInfo{
 		Pid:         strconv.Itoa(cPID),
 		Id:          id,
 		Name:        cName,
@@ -94,7 +85,7 @@ func RecordContainerInfo(id string, cPID int, commandArray []string, cName, volu
 // recordContainerLog 创建容器进程的日志文件并将其标准输出重定向到此文件
 func recordContainerLog(id string, cmdOut *io.Writer) {
 	dirUrl := filepath.Join(DefaultInfoLocation, id)
-	if has, err := dirOrFileExist(dirUrl); err == nil && !has {
+	if has, err := utils.DirOrFileExist(dirUrl); err == nil && !has {
 		if err := os.MkdirAll(dirUrl, 0622); err != nil {
 			log.LogErrorFrom("recordContainerLog", "MkdirAll", err)
 			return
@@ -126,7 +117,7 @@ func ListAllContainers() {
 		log.LogErrorFrom("ListAllContainers", "ReadDir", err)
 		return
 	}
-	var containers []*ContainerInfo
+	var containers []*record.ContainerInfo
 	for _, file := range files {
 		// 排除掉network文件夹的影响
 		if file.Name() == "network" {
@@ -162,7 +153,7 @@ func ListAllContainers() {
 }
 
 // getContainerInfo 获取一个容器的信息
-func getContainerInfo(file os.FileInfo) (*ContainerInfo, error) {
+func getContainerInfo(file os.FileInfo) (*record.ContainerInfo, error) {
 	// 获取文件名称
 	fileName := file.Name()
 	// 生成文件的绝对路径
@@ -173,7 +164,7 @@ func getContainerInfo(file os.FileInfo) (*ContainerInfo, error) {
 		log.LogErrorFrom("getContainerInfo", "ReadFile", err)
 		return nil, err
 	}
-	var containerInfo ContainerInfo
+	var containerInfo record.ContainerInfo
 	if err := json.Unmarshal(content, &containerInfo); err != nil {
 		log.LogErrorFrom("getContainerInfo", "Unmarshal", err)
 		return nil, err

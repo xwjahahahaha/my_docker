@@ -1,4 +1,4 @@
-package cmd
+package container
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"strings"
 	"xwj/mydocker/cgroups"
 	"xwj/mydocker/cgroups/subsystems"
-	"xwj/mydocker/container"
 	"xwj/mydocker/log"
 	"xwj/mydocker/network"
 )
@@ -15,7 +14,7 @@ import (
 // Run 运行容器
 func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName string, volume, cName, ImageTarPath, cId string, EnvSlice, port []string, NetWorkName string){
 	// 获取到管道写端
-	parent, pipeWriter := container.NewParentProcess(tty, volume, ImageTarPath, cId, EnvSlice)
+	parent, pipeWriter := NewParentProcess(tty, volume, ImageTarPath, cId, EnvSlice)
 	if parent == nil {
 		log.LogErrorFrom("Run", "NewParentProcess", fmt.Errorf(" parent process is nil"))
 		return
@@ -27,7 +26,7 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		log.Log.Error(err)
 	}
 	// 记录容器信息
-	containerInfo, err := container.RecordContainerInfo(cId, parent.Process.Pid, cmdArray, cName, volume, port)
+	containerInfo, err := RecordContainerInfo(cId, parent.Process.Pid, cmdArray, cName, volume, port)
 	if err != nil {
 		log.LogErrorFrom("Run", "recordContainerInfo", err)
 		return
@@ -61,9 +60,9 @@ func Run(tty bool, cmdArray []string, res *subsystems.ResourceConfig, cgroupName
 		}
 		containerCM.Destroy()
 		// 删除设置的AUFS工作目录
-		mntUrl := filepath.Join(container.ROOTURL, "mnt", cId)
-		container.DeleteWorkSpace(container.ROOTURL, mntUrl, volume, cId)
-		container.DeleteContainerInfo(containerInfo.Pid)
+		mntUrl := filepath.Join(ROOTURL, "mnt", cId)
+		DeleteWorkSpace(ROOTURL, mntUrl, volume, cId)
+		DeleteContainerInfo(containerInfo.Pid)
 		os.Exit(1)
 	}else {
 		// 返回容器的ID

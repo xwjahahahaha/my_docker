@@ -16,8 +16,8 @@ import (
 	"runtime"
 	"strings"
 	"text/tabwriter"
-	"xwj/mydocker/container"
 	"xwj/mydocker/log"
+	"xwj/mydocker/record"
 )
 
 // Network 网络
@@ -76,7 +76,7 @@ func CreateNetwork(driver, subnet, name string) error {
 }
 
 // Connect 容器连接网络
-func Connect(networkName string, cinfo *container.ContainerInfo) error {
+func Connect(networkName string, cinfo *record.ContainerInfo) error {
 	// 从networks字典中获取容器连接的网络信息，networks字典中保存了当前已经创建的网络
 	network, ok := networks[networkName]
 	if !ok {
@@ -190,7 +190,7 @@ func DeleteNetwork(networkName string) error {
 	return nw.remove(defaultNetworkPath)
 }
 
-func configEndpointIpAddressAndRoute(ep *Endpoint, cinfo *container.ContainerInfo) error {
+func configEndpointIpAddressAndRoute(ep *Endpoint, cinfo *record.ContainerInfo) error {
 	// 获取网络端点中的Veth的另一端
 	peerLink, err := netlink.LinkByName(ep.Device.PeerName)
 	if err != nil {
@@ -231,7 +231,7 @@ func configEndpointIpAddressAndRoute(ep *Endpoint, cinfo *container.ContainerInf
 // enterContainerNetns 进入容器内部并配置veth
 // 锁定当前程序执行的线程，防止goroutine别调度到其他线程，离开目标网络空间
 // 返回一个函数指针，执行这个返回函数才会退出容器的网络空间，回到宿主机的网络空间
-func enterContainerNetns(enLink *netlink.Link, cinfo *container.ContainerInfo) func() {
+func enterContainerNetns(enLink *netlink.Link, cinfo *record.ContainerInfo) func() {
 	// 找到容器的Net Namespace
 	// 通过/proc/[pid]/ns/net文件的文件描述符可以来操作Net Namepspace
 	// pid就是containerInfo中的容器在宿主机上映射的进程ID

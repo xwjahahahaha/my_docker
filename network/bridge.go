@@ -52,9 +52,9 @@ func (d *BridgeNetworkDriver) Create(subnet string, name string) (*Network, erro
 	ipRange.IP = ip
 	// 初始化网络对象
 	n := &Network{
-		Name: name,
+		Name:    name,
 		IpRange: ipRange,
-		Driver: d.Name(),
+		Driver:  d.Name(),
 	}
 	// 初始化配置Linux Bridge
 	if err := d.initBridge(n); err != nil {
@@ -64,7 +64,6 @@ func (d *BridgeNetworkDriver) Create(subnet string, name string) (*Network, erro
 	// 返回配置好的网络
 	return n, nil
 }
-
 
 // Delete 删除Bridge网络设备
 func (d *BridgeNetworkDriver) Delete(network *Network) error {
@@ -99,7 +98,7 @@ func (d *BridgeNetworkDriver) Connect(network *Network, endpoint *Endpoint) erro
 	// 创建Veth对象，通过PeerName配置Veth另一端的接口名cif-{endpoint ID前5位}
 	endpoint.Device = netlink.Veth{
 		LinkAttrs: la,
-		PeerName: "cif-" + endpoint.ID[:5],
+		PeerName:  "cif-" + endpoint.ID[:5],
 	}
 
 	// 调用netlink的LinkAdd方法创建出这个Veth接口
@@ -130,7 +129,7 @@ func createBridgeInterface(bridgeName string) error {
 	la := netlink.NewLinkAttrs()
 	la.Name = bridgeName
 	// 使用刚才创建的Link的属性创建netlink的Bridge对象
-	br := &netlink.Bridge{ LinkAttrs: la }
+	br := &netlink.Bridge{LinkAttrs: la}
 	// 调用netlink的LinkAdd方法，创建Bridge虚拟网络设备
 	if err := netlink.LinkAdd(br); err != nil {
 		return fmt.Errorf(" Bridge creation failed for bridge %s: %v", bridgeName, err)
@@ -153,10 +152,10 @@ func setInterfaceIP(name string, rawIP string) error {
 	// 通过netlink.AddrAdd给网络接口配置地址，等价于 ip addr add xxxx命令
 	// 同时如果配置了地址所在的网段信息，例如192.168.0.0/24, 还会配置路由表192.168.0.0/24转发到这个bridge上
 	addr := &netlink.Addr{
-		IPNet:       ipNet,
-		Label:       "",
-		Flags:       0,
-		Scope:       0,
+		IPNet: ipNet,
+		Label: "",
+		Flags: 0,
+		Scope: 0,
 	}
 	return netlink.AddrAdd(iface, addr)
 }
@@ -185,5 +184,3 @@ func setupIPTables(bridgeName string, subnet *net.IPNet) error {
 	}
 	return nil
 }
-
-
