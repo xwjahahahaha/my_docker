@@ -1,10 +1,9 @@
 # myDocker
 自己动手实现docker引擎
-学习自《自己动手写Docker》
-作者：陈显鹭（花名：遥鹭）-阿里云高级研发工程师等
-京东购买链接：https://item.jd.com/10033552355433.html
 
-# 文档/学习记录
+学习自《自己动手写Docker》 作者：陈显鹭（花名：遥鹭）-阿里云高级研发工程师等，京东购买链接：https://item.jd.com/10033552355433.html
+
+# 自学文档以及学习记录（对应commit）
 
 * [《动手实现一个docker引擎-1-从内核到docker的三驾马车》](https://blog.csdn.net/weixin_43988498/article/details/121044780)
 * [《动手实现一个docker引擎-2-实现基本Run版本容器引擎》](https://blog.csdn.net/weixin_43988498/article/details/121277395)
